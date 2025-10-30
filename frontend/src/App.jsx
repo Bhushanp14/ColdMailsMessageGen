@@ -1,41 +1,29 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import axios from 'axios'
 import { CSVLink } from 'react-csv'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import './App.css'
 
-const API_URL = 'http://localhost:8000/api/generate/'
+const API_URL = window.location.hostname.includes('replit.dev') 
+  ? `https://${window.location.hostname}:8000/api/generate/`
+  : 'http://localhost:8000/api/generate/'
+
+const createEmptyRow = (id) => ({
+  id,
+  Business_Name: '',
+  Business_Description: '',
+  'Address/Region': '',
+  Generated_Cold_Email: '',
+  Generated_Cold_Message: '',
+})
+
+const initialRows = Array.from({ length: 100 }, (_, i) => createEmptyRow(i + 1))
 
 function App() {
-  const [rows, setRows] = useState([
-    {
-      id: 1,
-      Business_Name: 'Acme Fitness',
-      Business_Description: 'A local gym offering personal training and group fitness classes',
-      'Address/Region': 'New York, USA',
-      Generated_Cold_Email: '',
-      Generated_Cold_Message: '',
-    },
-    {
-      id: 2,
-      Business_Name: 'Green Garden Cafe',
-      Business_Description: 'Organic cafe serving healthy meals and smoothies',
-      'Address/Region': 'San Francisco, CA',
-      Generated_Cold_Email: '',
-      Generated_Cold_Message: '',
-    },
-    {
-      id: 3,
-      Business_Name: 'Tech Solutions Inc',
-      Business_Description: 'IT consulting and software development company',
-      'Address/Region': 'Austin, TX',
-      Generated_Cold_Email: '',
-      Generated_Cold_Message: '',
-    },
-  ])
-
+  const [rows, setRows] = useState(initialRows)
   const [loading, setLoading] = useState(false)
+  const pasteAreaRef = useRef(null)
 
   const handleInputChange = (id, field, value) => {
     setRows(rows.map(row => 
@@ -67,34 +55,59 @@ function App() {
   }
 
   const clearTable = () => {
-    setRows([
-      {
-        id: 1,
-        Business_Name: '',
-        Business_Description: '',
-        'Address/Region': '',
-        Generated_Cold_Email: '',
-        Generated_Cold_Message: '',
-      },
-    ])
-    toast.info('Table cleared')
+    setRows(Array.from({ length: 100 }, (_, i) => createEmptyRow(i + 1)))
+    toast.info('Table cleared - 100 empty rows ready')
+  }
+
+  const handlePaste = (e) => {
+    e.preventDefault()
+    const pastedData = e.clipboardData.getData('text')
+    
+    const lines = pastedData.split('\n').filter(line => line.trim())
+    const parsedRows = []
+    
+    lines.forEach((line, index) => {
+      const columns = line.split('\t')
+      if (columns.length >= 3) {
+        parsedRows.push({
+          id: index + 1,
+          Business_Name: columns[0]?.trim() || '',
+          Business_Description: columns[1]?.trim() || '',
+          'Address/Region': columns[2]?.trim() || '',
+          Generated_Cold_Email: '',
+          Generated_Cold_Message: '',
+        })
+      }
+    })
+    
+    if (parsedRows.length > 0) {
+      const remainingRows = 100 - parsedRows.length
+      const emptyRows = remainingRows > 0 
+        ? Array.from({ length: remainingRows }, (_, i) => createEmptyRow(parsedRows.length + i + 1))
+        : []
+      
+      setRows([...parsedRows, ...emptyRows])
+      toast.success(`${parsedRows.length} rows pasted successfully!`)
+    } else {
+      toast.error('Invalid paste data. Please copy 3 columns from Excel (Business Name, Description, Address)')
+    }
   }
 
   const generateContent = async (type) => {
-    const emptyRows = rows.filter(row => 
-      !row.Business_Name.trim() || 
-      !row.Business_Description.trim() || 
-      !row['Address/Region'].trim()
+    const filledRows = rows.filter(row => 
+      row.Business_Name.trim() && 
+      row.Business_Description.trim() && 
+      row['Address/Region'].trim()
     )
 
-    if (emptyRows.length > 0) {
-      toast.warning('Please fill in all business details before generating')
+    if (filledRows.length === 0) {
+      toast.warning('Please fill in at least one row with business details before generating')
       return
     }
 
     setLoading(true)
     try {
-      const businesses = rows.map(({ id, ...rest }) => rest)
+      const businesses = filledRows.map(({ id, ...rest }) => rest)
       
       const response = await axios.post(API_URL, {
         type: type,
@@ -102,13 +115,22 @@ function App() {
       })
 
       const results = response.data.results
-      const updatedRows = rows.map((row, index) => ({
-        ...row,
-        ...results[index],
-      }))
+      
+      const updatedRows = rows.map((row) => {
+        const filledIndex = filledRows.findIndex(fr => 
+          fr.Business_Name === row.Business_Name && 
+          fr.Business_Description === row.Business_Description &&
+          fr['Address/Region'] === row['Address/Region']
+        )
+        
+        if (filledIndex !== -1 && results[filledIndex]) {
+          return { ...row, ...results[filledIndex] }
+        }
+        return row
+      })
 
       setRows(updatedRows)
-      toast.success(`${type === 'email' ? 'Emails' : 'Messages'} generated successfully!`)
+      toast.success(`${type === 'email' ? 'Emails' : 'Messages'} generated for ${filledRows.length} businesses!`)
     } catch (error) {
       console.error('Error generating content:', error)
       toast.error(error.response?.data?.error || 'Failed to generate content. Please try again.')
@@ -135,6 +157,19 @@ function App() {
         <h1>AI Cold Mail & Message Generator</h1>
         <p>Generate personalized cold emails and messages for your potential clients</p>
       </header>
+
+      <div className="paste-area-container">
+        <div className="paste-instructions">
+          <strong>📋 Bulk Paste from Excel:</strong> Copy 3 columns from Excel (Business Name, Description, Address/Region) and paste below
+        </div>
+        <textarea
+          ref={pasteAreaRef}
+          className="paste-area"
+          placeholder="Paste your Excel data here (3 columns: Business Name | Description | Address/Region)&#10;Example:&#10;Acme Fitness       A local gym     New York, USA&#10;Green Cafe    Organic cafe    San Francisco, CA"
+          onPaste={handlePaste}
+          disabled={loading}
+        />
+      </div>
 
       <div className="action-buttons">
         <button onClick={addRow} className="btn btn-primary">

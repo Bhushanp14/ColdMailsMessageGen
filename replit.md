@@ -14,29 +14,37 @@ A single-page AI web application that generates personalized cold emails and mes
   - django-cors-headers (CORS handling)
 
 ## Features
-1. **Editable Data Table**: Enter business details directly in the table
+1. **100-Row Pre-built Table**: Ready to use with 100 empty rows for bulk data entry
    - Business Name
    - Business Description
    - Address/Region
    - Generated Cold Email (AI-generated)
    - Generated Cold Message (AI-generated)
 
-2. **Table Management**:
+2. **Bulk Paste from Excel**: 
+   - Copy 3 columns from Excel (Business Name, Description, Address/Region)
+   - Paste directly into the paste area
+   - Automatically fills the table with your data
+   - Supports any number of rows (up to 100)
+
+3. **Table Management**:
    - Add Row: Add new business entries
    - Delete Row: Remove individual rows
-   - Clear Table: Reset all data
+   - Clear Table: Reset all 100 rows to empty
 
-3. **AI Generation**:
+4. **AI Generation**:
    - Generate Cold Emails: Create full personalized cold emails
    - Generate Cold Messages: Create short messages for LinkedIn/WhatsApp
+   - Only generates for rows with complete data (skips empty rows)
    - Uses Gemini AI with custom prompts for professional, conversational tone
 
-4. **Export**: Download results as CSV file
+5. **Export**: Download results as CSV file with all data
 
-5. **User Experience**:
+6. **User Experience**:
    - Loading indicators during AI generation
    - Toast notifications for success/error messages
    - Responsive design with clean UI
+   - Paste area with clear instructions
 
 ## Project Structure
 ```
@@ -80,7 +88,15 @@ A single-page AI web application that generates personalized cold emails and mes
 - CORS is enabled for all origins in development
 - Gemini API uses gemini-1.5-flash model for fast generation
 
-## Recent Changes
+## Recent Changes (October 30, 2025)
+- **Fixed API Connection**: Updated frontend to use correct Replit domain for backend API
+- **100-Row Table**: Changed from 3 sample rows to 100 empty rows for bulk data entry
+- **Bulk Paste Feature**: Added Excel paste functionality
+  - Users can copy 3 columns from Excel and paste directly
+  - Automatically parses tab-separated data
+  - Fills table with pasted data and keeps remaining rows empty
+- **Smart Generation**: AI now only generates for rows with complete data (skips empty rows)
+- **Improved UX**: Added paste area with clear instructions and visual styling
 - Initial project setup with Django and React
 - Integrated Google Gemini AI for content generation
 - Created editable table with full CRUD operations
