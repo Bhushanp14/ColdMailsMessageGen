@@ -193,3 +193,92 @@
   background-color: #f5f5f5;
   cursor: not-allowed;
 }
+
+
+/* --- Modal/Popup Styles --- */
+
+.modal-overlay {
+    /* Fixed overlay to cover the whole screen */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Semi-transparent dark background */
+    background-color: rgba(0, 0, 0, 0.7); 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Ensure it appears above everything else */
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #242424; /* Dark background from your :root */
+    color: rgba(255, 255, 255, 0.87); /* Text color from your :root */
+    padding: 25px;
+    border-radius: 8px;
+    /* Limit width so it doesn't span the whole screen */
+    max-width: 600px; 
+    max-height: 80vh; /* Limit height and allow scrolling */
+    overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    position: relative;
+    /* Use a light border for contrast on dark theme */
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    border-bottom: 2px solid #646cff; /* Use your link color for highlight */
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.modal-content pre {
+    /* Maintain proper formatting, especially for multi-line emails */
+    white-space: pre-wrap; 
+    word-wrap: break-word;
+    font-size: 14px;
+    line-height: 1.6;
+    background-color: #1a1a1a; /* Darker than background for code/pre blocks */
+    padding: 15px;
+    border-radius: 4px;
+}
+
+.close-btn {
+    /* Style for the 'X' or 'Close' button inside the modal */
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    font-weight: bold;
+    color: #e74c3c; /* Use danger color for visibility */
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    transition: color 0.25s;
+}
+
+.close-btn:hover {
+    color: #c0392b;
+}
+
+.sender-options {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  margin: 1.5rem 0;
+}
+
+.option-group label {
+  margin-right: 0.5rem;
+}
+
+.dropdown {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}

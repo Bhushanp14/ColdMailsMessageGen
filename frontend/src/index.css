@@ -25,7 +25,13 @@ a:hover {
 body {
   margin: 0;
   display: flex;
-  place-items: center;
+  
+  /* This centers content vertically (cross-axis) */
+  place-items: center; 
+  
+  /* 👈 ADD THIS LINE: This centers content horizontally (main-axis) */
+  justify-content: center; 
+
   min-width: 320px;
   min-height: 100vh;
 }
