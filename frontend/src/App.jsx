@@ -1,16 +1,18 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import axios from 'axios'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { useAuth } from './AuthContext'
+import LoginModal from './LoginModal'
 import './App.css'
 
-const API_URL = window.location.hostname.includes('replit.dev') 
+const API_URL = window.location.hostname.includes('replit.dev')
   ? `https://${window.location.hostname}:8000/api/generate/`
   : 'http://localhost:8000/api/generate/'
 
-const EXPORT_API_URL = window.location.hostname.includes('replit.dev') 
-? `https://${window.location.hostname}:8000/api/export_csv/`
-: 'http://localhost:8000/api/export_csv/'
+const EXPORT_API_URL = window.location.hostname.includes('replit.dev')
+  ? `https://${window.location.hostname}:8000/api/export_csv/`
+  : 'http://localhost:8000/api/export_csv/'
 
 const createEmptyRow = (id) => ({
   id,
@@ -21,18 +23,36 @@ const createEmptyRow = (id) => ({
   Generated_Cold_Message: '',
 })
 
-const initialRows = Array.from({ length: 100 }, (_, i) => createEmptyRow(i + 1))
-
 function App() {
-  const [rows, setRows] = useState(initialRows)
+  const { user, token, usage, logout, updateUsage, getRowLimit } = useAuth()
+  const defaultCount = getRowLimit()
+  const [rows, setRows] = useState(Array.from({ length: defaultCount }, (_, i) => createEmptyRow(i + 1)))
   const [loading, setLoading] = useState(false)
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const pasteAreaRef = useRef(null)
+
+  // Re-init rows when user logs in/out (limit changes)
+  useEffect(() => {
+    const newCount = getRowLimit()
+    setRows(prev => {
+      if (prev.length < newCount) {
+        // Expand: add empty rows to fill
+        const extra = Array.from(
+          { length: newCount - prev.length },
+          (_, i) => createEmptyRow(prev.length + i + 1)
+        )
+        return [...prev, ...extra]
+      }
+      return prev
+    })
+  }, [user, usage.emailLimit, usage.messageLimit])
 
   // 1. New state to track what's currently in the modal
   const [modalContent, setModalContent] = useState(null); // { title: string, body: string } 
 
   // 🆕 New states for dropdowns
   const [senderRole, setSenderRole] = useState('Web Developer')
+  const [outreachTone, setOutreachTone] = useState('Friendly')
   const [demoSite, setDemoSite] = useState('No')
 
   // Function to open the modal
@@ -46,24 +66,22 @@ function App() {
   };
 
   const handleInputChange = (id, field, value) => {
-    setRows(rows.map(row => 
+    setRows(rows.map(row =>
       row.id === id ? { ...row, [field]: value } : row
     ))
   }
 
   const addRow = () => {
+    if (rows.length >= 100) {
+      toast.warning('Maximum 100 rows allowed per session.')
+      return
+    }
     const newId = Math.max(...rows.map(r => r.id), 0) + 1
-    setRows([
-      ...rows,
-      {
-        id: newId,
-        Business_Name: '',
-        Business_Description: '',
-        'Address/Region': '',
-        Generated_Cold_Email: '',
-        Generated_Cold_Message: '',
-      },
-    ])
+    const limit = getRowLimit()
+    if (rows.length >= limit) {
+      toast.info(user ? 'You\'ve reached your credit limit.' : 'Sign up to unlock more rows!', { autoClose: 4000 })
+    }
+    setRows([...rows, createEmptyRow(newId)])
   }
 
   const deleteRow = (id) => {
@@ -75,17 +93,18 @@ function App() {
   }
 
   const clearTable = () => {
-    setRows(Array.from({ length: 100 }, (_, i) => createEmptyRow(i + 1)))
-    toast.info('Table cleared - 100 empty rows ready')
+    const count = getRowLimit()
+    setRows(Array.from({ length: count }, (_, i) => createEmptyRow(i + 1)))
+    toast.info(`Table cleared - ${count} empty rows ready`)
   }
 
   const handlePaste = (e) => {
     e.preventDefault()
     const pastedData = e.clipboardData.getData('text')
-    
+
     const lines = pastedData.split('\n').filter(line => line.trim())
     const parsedRows = []
-    
+
     lines.forEach((line, index) => {
       const columns = line.split('\t')
       if (columns.length >= 3) {
@@ -99,24 +118,36 @@ function App() {
         })
       }
     })
-    
+
     if (parsedRows.length > 0) {
-      const remainingRows = 100 - parsedRows.length
-      const emptyRows = remainingRows > 0 
-        ? Array.from({ length: remainingRows }, (_, i) => createEmptyRow(parsedRows.length + i + 1))
+      // Cap at 100 rows total
+      const cappedRows = parsedRows.slice(0, 100)
+      const limit = getRowLimit()
+      const remainingRows = limit - cappedRows.length
+      const emptyRows = remainingRows > 0
+        ? Array.from({ length: remainingRows }, (_, i) => createEmptyRow(cappedRows.length + i + 1))
         : []
-      
-      setRows([...parsedRows, ...emptyRows])
-      toast.success(`${parsedRows.length} rows pasted successfully!`)
+
+      setRows([...cappedRows, ...emptyRows])
+
+      if (cappedRows.length > limit) {
+        const unlockable = cappedRows.length - limit
+        toast.info(
+          `Pasted ${cappedRows.length} items. ${limit} are ready to generate; ${user ? 'upgrade' : 'sign up'} to unlock the other ${unlockable}!`,
+          { autoClose: 6000 }
+        )
+      } else {
+        toast.success(`${cappedRows.length} rows pasted successfully!`)
+      }
     } else {
       toast.error('Invalid paste data. Please copy 3 columns from Excel (Business Name, Description, Address)')
     }
   }
 
   const generateContent = async (type) => {
-    const filledRows = rows.filter(row => 
-      row.Business_Name.trim() && 
-      row.Business_Description.trim() && 
+    const filledRows = rows.filter(row =>
+      row.Business_Name.trim() &&
+      row.Business_Description.trim() &&
       row['Address/Region'].trim()
     )
 
@@ -125,50 +156,69 @@ function App() {
       return
     }
 
+    // Check remaining credits on the client side for a better UX message
+    const remaining = type === 'email'
+      ? usage.emailLimit - usage.emailCount
+      : usage.messageLimit - usage.messageCount
+
+    if (remaining <= 0) {
+      toast.error(`${type === 'email' ? 'Email' : 'Message'} credits exhausted!`)
+      if (!user) setIsLoginModalOpen(true)
+      return
+    }
+
     setLoading(true)
     try {
+      // Send all filled rows — backend will slice to remaining credits
       const businesses = filledRows.map(({ id, ...rest }) => rest)
-      
+
+      const config = {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      }
+
       const response = await axios.post(API_URL, {
         type: type,
+        outreach_tone: outreachTone,
         sender_role: senderRole,
         demo_site: demoSite,
         businesses: businesses,
-      })
+      }, config)
 
-      const results = response.data.results
-      
-       const updatedRows = rows.map((row) => {
+      const { results, email_count, message_count, processed, total_requested } = response.data
+      updateUsage(email_count, message_count)
 
+      const updatedRows = rows.map((row) => {
         const filledIndex = filledRows.findIndex(fr =>
-
           fr.Business_Name === row.Business_Name &&
-
           fr.Business_Description === row.Business_Description &&
-
           fr['Address/Region'] === row['Address/Region']
-
         )
-
-       
-
         if (filledIndex !== -1 && results[filledIndex]) {
-
           return { ...row, ...results[filledIndex] }
-
         }
-
         return row
-
       })
-
-
 
       setRows(updatedRows)
-      toast.success(`${type === 'email' ? 'Emails' : 'Messages'} generated for ${filledRows.length} businesses!`)
+
+      if (processed < total_requested) {
+        const remaining = total_requested - processed
+        toast.info(
+          `Generated for ${processed} businesses. ${remaining} more require ${user ? 'an upgrade' : 'signup'}.`,
+          { autoClose: 5000 }
+        )
+        if (!user) setIsLoginModalOpen(true)
+      } else {
+        toast.success(`${type === 'email' ? 'Emails' : 'Messages'} generated for ${processed} businesses!`)
+      }
     } catch (error) {
       console.error('Error generating content:', error)
-      toast.error(error.response?.data?.error || 'Failed to generate content. Please try again.')
+      if (error.response?.data?.limit_reached) {
+        toast.error(`${type === 'email' ? 'Email' : 'Message'} limit reached!`)
+        if (!user) setIsLoginModalOpen(true)
+      } else {
+        toast.error(error.response?.data?.error || 'Failed to generate content. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -188,7 +238,7 @@ function App() {
         return
       }
 
-      const response = await axios.post(EXPORT_API_URL, 
+      const response = await axios.post(EXPORT_API_URL,
         { rows: validRows },
         { responseType: 'blob' }
       )
@@ -212,47 +262,90 @@ function App() {
   return (
     <div className="app-container max-w-7xl mx-auto">
       <ToastContainer position="top-right" autoClose={3000} />
-      
-        <header className="app-header">
-          <h1>AI Cold Mail & Message Generator</h1>
-          <p>Generate personalized cold emails and messages for your potential clients</p>
-        </header>
 
-        <div className="paste-area-container">
-          <div className="paste-instructions">
-            <strong>📋 Bulk Paste from Excel:</strong> Copy 3 columns from Excel (Business Name, Description, Address/Region) and paste below
+      <header className="app-header">
+        <div className="auth-bar">
+          <div className="usage-stats">
+            <span className={`usage-pill ${usage.emailCount >= usage.emailLimit ? 'usage-limit' : ''}`}>
+              ✉️ Emails: <strong>{usage.emailCount}/{usage.emailLimit}</strong>
+            </span>
+            <span className={`usage-pill ${usage.messageCount >= usage.messageLimit ? 'usage-limit' : ''}`}>
+              💬 Messages: <strong>{usage.messageCount}/{usage.messageLimit}</strong>
+            </span>
+            {!user && (usage.emailCount >= usage.emailLimit || usage.messageCount >= usage.messageLimit) && (
+              <span className="sign-up-prompt">Sign up for 15 more free!</span>
+            )}
           </div>
-          <textarea
-            ref={pasteAreaRef}
-            className="paste-area"
-            placeholder="Paste your Excel data here (3 columns: Business Name | Description | Address/Region)&#10;Example:&#10;Acme Fitness       A local gym     New York, USA&#10;Green Cafe    Organic cafe    San Francisco, CA"
-            onPaste={handlePaste}
-            disabled={loading}
-          />
+          <div className="user-actions">
+            {user ? (
+              <>
+                <span className="user-email">{user.email}</span>
+                <button onClick={logout} className="btn-link">Logout</button>
+              </>
+            ) : (
+              <button onClick={() => setIsLoginModalOpen(true)} className="btn btn-primary btn-sm">
+                Login / Signup
+              </button>
+            )}
+          </div>
         </div>
+        <h1>AI Cold Mail & Message Generator</h1>
+        <p>Generate personalized cold emails and messages for your potential clients</p>
+      </header>
 
-        <div className="sender-options">
+      <div className="paste-area-container">
+        <div className="paste-instructions">
+          <strong>📋 Bulk Paste from Excel:</strong> Copy 3 columns from Excel (Business Name, Description, Address/Region) and paste below
+        </div>
+        <textarea
+          ref={pasteAreaRef}
+          className="paste-area"
+          placeholder="Paste your Excel data here (3 columns: Business Name | Description | Address/Region)&#10;Example:&#10;Acme Fitness       A local gym     New York, USA&#10;Green Cafe    Organic cafe    San Francisco, CA"
+          onPaste={handlePaste}
+          disabled={loading}
+        />
+      </div>
+
+      <div className="sender-options">
         <div className="option-group">
           <label><strong>Your Role / Designation:</strong></label>
-          <select 
-            value={senderRole} 
-            onChange={(e) => setSenderRole(e.target.value)} 
+          <select
+            value={senderRole}
+            onChange={(e) => setSenderRole(e.target.value)}
             disabled={loading}
             className="dropdown"
           >
             <option value="Web Developer">Web Developer</option>
             <option value="Web Designer">Web Designer</option>
-            <option value="Freelancer">Freelancer</option>
-            <option value="Agency Owner">Agency Owner</option>
-            <option value="Other">Other</option>
+            <option value="SEO Specialist">SEO Specialist</option>
+            <option value="Digital Marketer">Digital Marketer</option>
+            <option value="Social Media Manager">Social Media Manager</option>
+            <option value="Graphic Designer">Graphic Designer</option>
+            <option value="Video Editor">Video Editor</option>
+            <option value="AI / Automation Consultant">AI / Automation Consultant</option>
           </select>
         </div>
 
         <div className="option-group">
-          <label><strong>Do you have a demo site ready?</strong></label>
-          <select 
-            value={demoSite} 
-            onChange={(e) => setDemoSite(e.target.value)} 
+          <label><strong>Tone:</strong></label>
+          <select
+            value={outreachTone}
+            onChange={(e) => setOutreachTone(e.target.value)}
+            disabled={loading}
+            className="dropdown"
+          >
+            <option value="Friendly">Friendly</option>
+            <option value="Short & Direct">Short & Direct</option>
+            <option value="Professional">Professional</option>
+            <option value="Casual">Casual</option>
+          </select>
+        </div>
+
+        <div className="option-group">
+          <label><strong>Example / Demo Ready</strong></label>
+          <select
+            value={demoSite}
+            onChange={(e) => setDemoSite(e.target.value)}
             disabled={loading}
             className="dropdown"
           >
@@ -261,55 +354,58 @@ function App() {
           </select>
         </div>
       </div>
-        <div className="action-buttons">
-          <button onClick={addRow} className="btn btn-primary">
-            Add Row
-          </button>
-          <button onClick={clearTable} className="btn btn-secondary">
-            Clear Table
-          </button>
-          <button 
-            onClick={() => generateContent('email')} 
-            disabled={loading}
-            className="btn btn-success"
-          >
-            {loading ? 'Generating...' : 'Generate Cold Emails'}
-          </button>
-          <button 
-            onClick={() => generateContent('message')} 
-            disabled={loading}
-            className="btn btn-success"
-          >
-            {loading ? 'Generating...' : 'Generate Cold Messages'}
-          </button>
-          <button onClick={handleExportCSV} className="btn btn-info">
+      <div className="action-buttons">
+        <button onClick={addRow} className="btn btn-primary">
+          Add Row
+        </button>
+        <button onClick={clearTable} className="btn btn-secondary">
+          Clear Table
+        </button>
+        <button
+          onClick={() => generateContent('email')}
+          disabled={loading}
+          className="btn btn-success"
+        >
+          {loading ? 'Generating...' : 'Generate Cold Emails'}
+        </button>
+        <button
+          onClick={() => generateContent('message')}
+          disabled={loading}
+          className="btn btn-success"
+        >
+          {loading ? 'Generating...' : 'Generate Cold Messages'}
+        </button>
+        <button onClick={handleExportCSV} className="btn btn-info">
           Export to CSV
-          </button>
-        </div>
+        </button>
+      </div>
 
-        <div className="table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Business Name</th>
-                <th>Business Description</th>
-                <th>Address/Region</th>
-                <th>Generated Cold Email</th>
-                <th>Generated Cold Message</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id}>
+      <div className="table-container">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Business Name</th>
+              <th>Business Description</th>
+              <th>Address/Region</th>
+              <th>Generated Cold Email</th>
+              <th>Generated Cold Message</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, index) => {
+              const isLocked = index >= getRowLimit();
+              return (
+                <tr key={row.id} className={isLocked ? 'row-locked' : ''}>
                   <td>
                     <input
                       type="text"
                       value={row.Business_Name}
                       onChange={(e) => handleInputChange(row.id, 'Business_Name', e.target.value)}
-                      disabled={loading}
+                      disabled={loading || isLocked}
                       placeholder="Enter business name"
                     />
+                    {isLocked && <div className="locked-indicator">🔒 Sign up to unlock</div>}
                   </td>
                   <td>
                     <input
@@ -333,7 +429,7 @@ function App() {
                   <td>
                     {row.Generated_Cold_Email ? (
                       <button
-                        onClick={() => openModal('Generated Cold Email',row.Generated_Cold_Email)}
+                        onClick={() => openModal('Generated Cold Email', row.Generated_Cold_Email)}
                         className="btn btn-info btn-sm"
                         disabled={loading}
                       >
@@ -373,26 +469,33 @@ function App() {
                     </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {/* 3. Modal Rendering Logic */}
-      {modalContent && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div 
-            className="modal-content" 
-            // Prevent closing when clicking inside the content box
-            onClick={(e) => e.stopPropagation()} 
-          >
-            <button className="close-btn" onClick={closeModal}>&times;</button>
-            <h3>{modalContent.title}</h3>
-            {/* Using <pre> to maintain line breaks and whitespace */}
-            <pre>{modalContent.content}</pre>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {/* 3. Modal Rendering Logic */}
+      {
+        modalContent && (
+          <div className="modal-overlay" onClick={closeModal}>
+            <div
+              className="modal-content"
+              // Prevent closing when clicking inside the content box
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button className="close-btn" onClick={closeModal}>&times;</button>
+              <h3>{modalContent.title}</h3>
+              {/* Using <pre> to maintain line breaks and whitespace */}
+              <pre>{modalContent.content}</pre>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+      />
+    </div >
   )
 }
 
