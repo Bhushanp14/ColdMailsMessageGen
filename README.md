@@ -1,11 +1,11 @@
 # AI Cold Email & Message Generator
 
-A powerful, AI-driven tool designed to help freelancers, developers, marketers, and agencies generate personalized cold outreach emails and messages at scale. Built with **Django**, **React**, and powered by **Google Gemini 2.5 Flash**.
+A powerful, AI-driven tool designed to help freelancers, developers, marketers, and agencies generate personalized cold outreach emails and messages at scale. Built with **Django**, **React**, and powered by **Google Gemini 2.0 Flash**.
 
 ## 🚀 Key Features
 
 - **Bulk Generation**: Paste business details directly from Excel/CSV and generate dozens of personalized emails or messages in seconds.
-- **AI-Powered Personalization**: Uses Google Gemini 2.5 Flash to craft human-like, conversational outreach based on business descriptions.
+- **AI-Powered Personalization**: Uses Google Gemini 2.0 Flash to craft human-like, conversational outreach based on business descriptions.
 - **Flexible Content Types**: Choose between professional **Cold Emails** (with subject lines) or short, casual **Cold Messages** (for LinkedIn/DMs).
 - **Role-Based Personalization**: Choose your service role (Web Developer, Designer, SEO Specialist, Marketer, etc.) so the AI tailors the outreach to your profession.
 - **Tone Selection**: Control the style of outreach with tone options like Friendly, Professional, Casual, or Short & Direct.
@@ -16,9 +16,9 @@ A powerful, AI-driven tool designed to help freelancers, developers, marketers, 
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React.js (Vite), Axios, React-Toastify
-- **Backend**: Django, Django REST Framework (DRF)
-- **AI Engine**: Google Gemini 2.5 Flash
+- **Frontend**: React.js (Vite), Axios, React-Toastify, **Google OAuth**
+- **Backend**: Django, Django REST Framework (DRF), **SimpleJWT**
+- **AI Engine**: Google Gemini 2.0 Flash
 - **Database**: SQLite (Development)
 
 ## 📂 Project Structure
@@ -80,7 +80,7 @@ GeminiEmailGen/
 ## 📋 Usage Guide
 
 1. **Paste Data**: Copy 3 columns from an Excel sheet (Business Name, Business Description, Address/Region) and paste them into the "Bulk Paste" textarea.
-2. 2. **Configure Pitch**:
+2. **Configure Pitch**:
    - Select your **Sender Role** (e.g., Web Developer, Designer, Marketer).
    - Choose the **Tone** of the outreach (Friendly, Professional, Casual, Short & Direct).
    - Indicate if you have an **Example/Demo ready** that the AI can reference.
@@ -88,6 +88,11 @@ GeminiEmailGen/
 4. **Review**: Click "View Email/Message" in the table to see the AI-generated content in a modal.
 5. **Export**: Once satisfied, click **Export to CSV** to download all results.
 
+## 🔐 Authentication & Credits
+
+- **Guest Access**: No login required. Limited to 10 email and 10 message generations.
+- **User Accounts**: Sign up or log in via Google to increase your limit to 25 generations each.
+- **Usage Tracking**: Credits are tracked via IP address for guests and account-based for registered users.
 
 ## 🎯 Supported Outreach Roles
 
