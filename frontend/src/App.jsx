@@ -32,24 +32,26 @@ function App() {
             )}
           </div>
           
-          <nav className="nav-links">
-            <Link to="/" className={location.pathname === '/' ? 'active' : ''}>Generator</Link>
-            <Link to="/how-it-works" className={location.pathname === '/how-it-works' ? 'active' : ''}>How It Works</Link>
-            <Link to="/faq" className={location.pathname === '/faq' ? 'active' : ''}>FAQ</Link>
-            <Link to="/about" className={location.pathname === '/about' ? 'active' : ''}>About</Link>
-          </nav>
+          <div className="top-right-actions">
+            <nav className="nav-links">
+              <Link to="/" className={location.pathname === '/' ? 'active' : ''}>Generator</Link>
+              <Link to="/how-it-works" className={location.pathname === '/how-it-works' ? 'active' : ''}>How It Works</Link>
+              <Link to="/faq" className={location.pathname === '/faq' ? 'active' : ''}>FAQ</Link>
+              <Link to="/about" className={location.pathname === '/about' ? 'active' : ''}>About</Link>
+            </nav>
 
-          <div className="user-actions">
-            {user ? (
-              <>
-                <span className="user-email">{user.email}</span>
-                <button onClick={logout} className="btn-link">Logout</button>
-              </>
-            ) : (
-              <button onClick={() => setIsLoginModalOpen(true)} className="btn btn-primary btn-sm">
-                Login / Signup
-              </button>
-            )}
+            <div className="user-actions">
+              {user ? (
+                <>
+                  <span className="user-email">{user.email}</span>
+                  <button onClick={logout} className="btn-link">Logout</button>
+                </>
+              ) : (
+                <button onClick={() => setIsLoginModalOpen(true)} className="btn btn-primary btn-sm">
+                  Login / Signup
+                </button>
+              )}
+            </div>
           </div>
         </div>
         
