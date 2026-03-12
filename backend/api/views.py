@@ -132,8 +132,8 @@ class EmailLogin(APIView):
         return Response(_generate_tokens_for_user(user))
 
 
-# NOTE: Using the recommended 'gemini-2.0-flash' model
-MODEL_NAME = 'gemini-2.0-flash'
+# NOTE: Using the recommended 'gemini-2.5-flash' model
+MODEL_NAME = 'gemini-2.5-flash'
 
 # Configure the API key once
 genai.configure(api_key=settings.GEMINI_API_KEY)

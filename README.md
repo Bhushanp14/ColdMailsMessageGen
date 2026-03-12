@@ -1,11 +1,11 @@
 # AI Cold Email & Message Generator
 
-A powerful, AI-driven tool designed to help freelancers, developers, marketers, and agencies generate personalized cold outreach emails and messages at scale. Built with **Django**, **React**, and powered by **Google Gemini 2.0 Flash**.
+A powerful, AI-driven tool designed to help freelancers, developers, marketers, and agencies generate personalized cold outreach emails and messages at scale. Built with **Django**, **React**, and powered by **Google Gemini 2.5 Flash**.
 
 ## 🚀 Key Features
 
 - **Bulk Generation**: Paste business details directly from Excel/CSV and generate dozens of personalized emails or messages in seconds.
-- **AI-Powered Personalization**: Uses Google Gemini 2.0 Flash to craft human-like, conversational outreach based on business descriptions.
+- **AI-Powered Personalization**: Uses Google Gemini 2.5 Flash to craft human-like, conversational outreach based on business descriptions.
 - **Flexible Content Types**: Choose between professional **Cold Emails** (with subject lines) or short, casual **Cold Messages** (for LinkedIn/DMs).
 - **Role-Based Personalization**: Choose your service role (Web Developer, Designer, SEO Specialist, Marketer, etc.) so the AI tailors the outreach to your profession.
 - **Tone Selection**: Control the style of outreach with tone options like Friendly, Professional, Casual, or Short & Direct.
@@ -18,7 +18,7 @@ A powerful, AI-driven tool designed to help freelancers, developers, marketers, 
 
 - **Frontend**: React.js (Vite), Axios, React-Toastify, **Google OAuth**
 - **Backend**: Django, Django REST Framework (DRF), **SimpleJWT**
-- **AI Engine**: Google Gemini 2.0 Flash
+- **AI Engine**: Google Gemini 2.5 Flash
 - **Database**: SQLite (Development)
 
 ## 📂 Project Structure
