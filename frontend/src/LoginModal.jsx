@@ -37,10 +37,26 @@ const LoginModal = ({ isOpen, onClose }) => {
 
     const handleEmailAuth = async (e) => {
         e.preventDefault();
+        
+        // 1. Basic Email Validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            toast.error('Please enter a valid email address.');
+            return;
+        }
+
+        // 2. Password Length Validation
+        if (password.length < 8) {
+            toast.error('Password must be at least 8 characters long.');
+            return;
+        }
+
+        // 3. Password Match (Signup only)
         if (isSignup && password !== confirmPassword) {
             toast.error('Passwords do not match.');
             return;
         }
+
         setLoading(true);
         try {
             const endpoint = isSignup ? `${BASE}/auth/register/` : `${BASE}/auth/login/`;
