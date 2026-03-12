@@ -309,6 +309,7 @@ function App() {
       <div className="sender-options">
         <div className="option-group">
           <label><strong>Your Role / Designation:</strong></label>
+          <p className="helper-text">Select the service you are offering to the business.</p>
           <select
             value={senderRole}
             onChange={(e) => setSenderRole(e.target.value)}
