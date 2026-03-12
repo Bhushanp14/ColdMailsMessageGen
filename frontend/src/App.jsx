@@ -16,7 +16,7 @@ function App() {
   const location = useLocation()
 
   return (
-    <div className="app-container max-w-7xl mx-auto">
+    <div className="app-container">
       <header className="app-header">
         <ToastContainer position="top-right" autoClose={3000} />
         <div className="auth-bar">
