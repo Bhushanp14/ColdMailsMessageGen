@@ -354,27 +354,56 @@
 
 .sender-options {
   display: flex;
-  gap: 2rem;
+  gap: 2.5rem;
+  align-items: flex-end;
+  margin: 2rem 0;
+  padding: 0 10px;
+}
+
+.option-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-row {
+  display: flex;
   align-items: center;
-  margin: 1.5rem 0;
+  gap: 0.5rem;
 }
 
 .option-group label {
-  margin-right: 0.5rem;
+  font-size: 14px;
+  color: #2c3e50;
+  white-space: nowrap;
 }
 
 .dropdown {
-  padding: 6px 10px;
+  padding: 8px 12px;
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid #dcdde1;
+  background-color: white;
+  color: #2f3640;
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.dropdown:focus {
+  border-color: #3498db;
+}
+
+.dropdown:disabled {
+  background-color: #f5f6fa;
+  cursor: not-allowed;
 }
 
 .helper-text {
-  font-size: 12px;
-  color: #7f8c8d;
-  margin-top: 4px;
-  margin-bottom: 8px;
-  font-weight: 400;
+  font-size: 11px;
+  color: #95a5a6;
+  margin-bottom: 5px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }
 
 /* --- Auth Modal Specifics --- */

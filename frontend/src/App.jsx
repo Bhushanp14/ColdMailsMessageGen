@@ -308,51 +308,57 @@ function App() {
 
       <div className="sender-options">
         <div className="option-group">
-          <label><strong>Your Role / Designation:</strong></label>
           <p className="helper-text">Select the service you are offering to the business.</p>
-          <select
-            value={senderRole}
-            onChange={(e) => setSenderRole(e.target.value)}
-            disabled={loading}
-            className="dropdown"
-          >
-            <option value="Web Developer">Web Developer</option>
-            <option value="Web Designer">Web Designer</option>
-            <option value="SEO Specialist">SEO Specialist</option>
-            <option value="Digital Marketer">Digital Marketer</option>
-            <option value="Social Media Manager">Social Media Manager</option>
-            <option value="Graphic Designer">Graphic Designer</option>
-            <option value="Video Editor">Video Editor</option>
-            <option value="AI / Automation Consultant">AI / Automation Consultant</option>
-          </select>
+          <div className="input-row">
+            <label><strong>Your Role / Designation:</strong></label>
+            <select
+              value={senderRole}
+              onChange={(e) => setSenderRole(e.target.value)}
+              disabled={loading}
+              className="dropdown"
+            >
+              <option value="Web Developer">Web Developer</option>
+              <option value="Web Designer">Web Designer</option>
+              <option value="SEO Specialist">SEO Specialist</option>
+              <option value="Digital Marketer">Digital Marketer</option>
+              <option value="Social Media Manager">Social Media Manager</option>
+              <option value="Graphic Designer">Graphic Designer</option>
+              <option value="Video Editor">Video Editor</option>
+              <option value="AI / Automation Consultant">AI / Automation Consultant</option>
+            </select>
+          </div>
         </div>
 
         <div className="option-group">
-          <label><strong>Tone:</strong></label>
-          <select
-            value={outreachTone}
-            onChange={(e) => setOutreachTone(e.target.value)}
-            disabled={loading}
-            className="dropdown"
-          >
-            <option value="Friendly">Friendly</option>
-            <option value="Short & Direct">Short & Direct</option>
-            <option value="Professional">Professional</option>
-            <option value="Casual">Casual</option>
-          </select>
+          <div className="input-row">
+            <label><strong>Tone:</strong></label>
+            <select
+              value={outreachTone}
+              onChange={(e) => setOutreachTone(e.target.value)}
+              disabled={loading}
+              className="dropdown"
+            >
+              <option value="Friendly">Friendly</option>
+              <option value="Short & Direct">Short & Direct</option>
+              <option value="Professional">Professional</option>
+              <option value="Casual">Casual</option>
+            </select>
+          </div>
         </div>
 
         <div className="option-group">
-          <label><strong>Example / Demo Ready</strong></label>
-          <select
-            value={demoSite}
-            onChange={(e) => setDemoSite(e.target.value)}
-            disabled={loading}
-            className="dropdown"
-          >
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
-          </select>
+          <div className="input-row">
+            <label><strong>Example / Demo Ready</strong></label>
+            <select
+              value={demoSite}
+              onChange={(e) => setDemoSite(e.target.value)}
+              disabled={loading}
+              className="dropdown"
+            >
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
         </div>
       </div>
       <div className="action-buttons">
